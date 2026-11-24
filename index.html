@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎬 TÓTH: AZ AI ÁRNYÉKÁBAN | Premier</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap');
+:root{--teal:#0098ba;--pink:#e32185;--purple:#6e2b69;--light:#f0f9fa}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#080b12;color:#f7f9fc;font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.15;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:42px 42px;z-index:0}
+.aurora{position:absolute;inset:-20% -10% auto;height:780px;background:radial-gradient(ellipse at 20% 20%,#0098ba44,transparent 48%),radial-gradient(ellipse at 80% 25%,#e3218533,transparent 42%),radial-gradient(ellipse at 50% 80%,#6e2b6944,transparent 50%);filter:blur(30px);z-index:0}
+main{position:relative;z-index:1}
+nav{max-width:1100px;margin:auto;padding:28px 26px;display:flex;justify-content:space-between;align-items:center;color:#aab5c4;font-size:11px;letter-spacing:3px;text-transform:uppercase}
+.logo{font-weight:900;color:#fff;letter-spacing:4px}.logo span{color:var(--teal)}
+.hero{min-height:calc(100vh - 75px);display:flex;align-items:center;justify-content:center;text-align:center;padding:55px 22px 90px;position:relative}
+.hero-inner{max-width:920px}
+.eyebrow{font-size:11px;letter-spacing:5px;color:#77d9e9;text-transform:uppercase;font-weight:800}
+h1{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:clamp(48px,9vw,112px);line-height:.92;letter-spacing:-3px;margin:25px 0 18px;text-shadow:0 10px 50px #0098ba35}
+h1 span{display:block;color:transparent;-webkit-text-stroke:1px #e32185;background:linear-gradient(90deg,#ff8ac7,#e32185,#a77bff);background-clip:text;-webkit-background-clip:text}
+.subtitle{font-size:clamp(13px,2vw,17px);color:#b7c2d1;letter-spacing:2px;text-transform:uppercase}
+.rule{height:1px;width:150px;margin:30px auto;background:linear-gradient(90deg,transparent,var(--teal),var(--pink),transparent)}
+.tagline{font-family:'Playfair Display',Georgia,serif;font-style:italic;color:#dce5ef;font-size:clamp(17px,2.6vw,23px);margin:0 auto 35px}
+.poster{width:min(680px,90vw);margin:38px auto 0;padding:20px;border:1px solid #ffffff24;background:linear-gradient(135deg,#101b2aee,#15101eee);box-shadow:0 25px 100px #0009,0 0 60px #0098ba18;position:relative;overflow:hidden}
+.poster:before,.poster:after{content:"";position:absolute;width:240px;height:240px;border:1px solid #0098ba44;border-radius:50%;top:-140px;left:-80px}
+.poster:after{width:300px;height:300px;top:auto;left:auto;bottom:-210px;right:-110px;border-color:#e3218544}
+.poster-top{font-size:10px;letter-spacing:4px;color:#8b9aaa;text-transform:uppercase}
+.poster-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(25px,5vw,44px);font-weight:900;margin:14px 0 8px}
+.poster-title em{font-style:normal;color:var(--pink)}
+.poster-copy{font-size:11px;line-height:1.8;color:#aab7c7;letter-spacing:1px}
+.countdown-wrap{margin:28px auto 10px}.countdown-label{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#8dddeb;margin-bottom:13px;font-weight:800}.countdown{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.countdown div{min-width:82px;padding:13px 12px;border:1px solid #ffffff25;background:linear-gradient(145deg,#ffffff12,#ffffff04);box-shadow:0 8px 30px #0005}.countdown strong{display:block;font-size:clamp(25px,5vw,38px);font-weight:900;color:#fff;font-variant-numeric:tabular-nums}.countdown span{display:block;margin-top:4px;font-size:9px;letter-spacing:2px;color:#8fa0b4}.meta{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:25px 0}
+.pill{border:1px solid #ffffff24;background:#ffffff08;padding:12px 17px;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+.pill strong{color:#fff}
+.cta{display:inline-flex;align-items:center;gap:12px;padding:17px 27px;border:0;border-radius:3px;background:linear-gradient(100deg,var(--teal),var(--purple),var(--pink));color:#fff;font-weight:900;letter-spacing:2px;text-transform:uppercase;cursor:pointer;box-shadow:0 12px 40px #0098ba33;transition:.25s}
+.cta:hover{transform:translateY(-3px);box-shadow:0 18px 55px #e3218544}
+.note{font-size:10px;color:#738194;letter-spacing:1.5px;margin-top:15px}
+section{max-width:900px;margin:0 auto;padding:55px 24px}
+.section-label{color:#66cfe0;font-size:10px;letter-spacing:4px;text-transform:uppercase;font-weight:800}
+h2{font-family:'Playfair Display',Georgia,serif;font-size:clamp(27px,5vw,42px);margin:12px 0 20px}
+.synopsis{color:#b7c2d1;line-height:1.9;font-size:14px;max-width:760px}
+.cast{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+.person{padding:18px 12px;border:1px solid #ffffff18;background:linear-gradient(145deg,#ffffff0b,#ffffff03);text-align:center}
+.person b{display:block;font-size:13px;margin-bottom:6px}.person small{color:#8190a3;font-size:10px;letter-spacing:1px}
+.final{border-top:1px solid #ffffff14;text-align:center;padding:50px 20px 60px;color:#7f8da0;font-size:10px;letter-spacing:3px;text-transform:uppercase}
+.final strong{display:block;color:#fff;font-family:'Playfair Display',Georgia,serif;font-size:25px;letter-spacing:1px;margin-bottom:12px}
+#reveal{display:none;position:fixed;inset:0;background:#03050a;z-index:5;align-items:center;justify-content:center;text-align:center;padding:25px}
+#reveal.show{display:flex;animation:fade .8s ease}
+.reveal-box{max-width:700px}
+.reveal-box .studio{font-size:11px;letter-spacing:6px;color:#7bd9e7}
+.reveal-box h2{font-size:clamp(42px,9vw,88px);line-height:.95;margin:25px 0}
+.reveal-box p{color:#aab7c7;letter-spacing:2px;font-size:12px}
+.close{margin-top:30px;background:transparent;border:1px solid #ffffff55;color:white;padding:12px 20px;cursor:pointer;letter-spacing:2px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media(max-width:600px){nav{padding:20px 16px}.cast{grid-template-columns:repeat(2,1fr)}.poster{padding:17px}.meta{gap:8px}.pill{padding:10px 12px}.countdown{gap:6px}.countdown div{min-width:68px;padding:10px 8px}}
+</style>
+</head>
+<body>
+<div class="aurora"></div>
+<main>
+<nav><div class="logo">CREA<span>SCOLA</span> PICTURES</div><div>Hivatalos filmpremier</div></nav>
+<header class="hero">
+ <div class="hero-inner">
+  <div class="eyebrow">Egy történet. Egy legenda. Rengeteg AI.</div>
+  <h1>🎬 TÓTH<span>AZ AI ÁRNYÉKÁBAN</span></h1>
+  <div class="subtitle">A film, amelyet talán nem kellett volna legenerálni.</div>
+  <div class="rule"></div>
+  <p class="tagline">„Minden nagy történet egyetlen prompttal kezdődik.”</p>
+  <div class="poster">
+   <div class="poster-top">Creascola Pictures bemutatja</div>
+   <div class="poster-title">🎬 TÓTH: <em>AZ AI ÁRNYÉKÁBAN</em></div>
+   <div class="poster-copy">A CreaCodex felemelkedése • A mínusz 10 pontok kora • Az AI határtalan lehetőségei</div>
+  </div>
+  <div class="countdown-wrap">
+   <div class="countdown-label">A premier kezdetéig</div>
+   <div id="countdown" class="countdown" aria-live="polite">
+    <div><strong id="days">00</strong><span>NAP</span></div>
+    <div><strong id="hours">00</strong><span>ÓRA</span></div>
+    <div><strong id="minutes">00</strong><span>PERC</span></div>
+    <div><strong id="seconds">00</strong><span>MÁSODPERC</span></div>
+   </div>
+  </div>
+  <div class="meta">
+   <div class="pill">📅 <strong>SZOMBAT</strong></div>
+   <div class="pill">⏰ <strong>11:00</strong></div>
+   <div class="pill">🎬 <strong>NAGY PREMIER</strong></div>
+  </div>
+  <button class="cta" onclick="document.getElementById('reveal').classList.add('show')">▶ &nbsp; Premier hangulat bekapcsolása</button>
+  <div class="note">A belépéshez popcorn ajánlott. A CreaCodex használata nem kötelező.</div>
+ </div>
+</header>
+<section>
+ <div class="section-label">A történet</div>
+ <h2>Egy rendszer. Egy vízió. Végtelen mínuszpont.</h2>
+ <p class="synopsis">Amikor a jól működő CreaCredit helyét átveszi a rejtélyes CreaCodex, a Creascola falai között új korszak kezdődik. A háttérben AI-generált projektek, legendásnak szánt digitális fejlesztések és egyre különösebb döntések formálják az eseményeket. A történet középpontjában Tóth áll – és a kérdés, amely mindent megváltoztathat: ki írta valójában a kódot?</p>
+ <div class="cast">
+  <div class="person"><b>TÓTH</b><small>A KÓDOLATLAN LEGENDA</small></div>
+  <div class="person"><b>KELE</b><small>A TITOKZATOS TÁRS</small></div>
+  <div class="person"><b>ZSOLTI BÁ</b><small>A NAGY ÖTLETGAZDA</small></div>
+  <div class="person"><b>AZ AI</b><small>A NÉVTELEN ALKOTÓ</small></div>
+ </div>
+</section>
+<footer class="final"><strong>Szombat • 11:00</strong>Ott találkozunk. A vászon készen áll.</footer>
+</main>
+<div id="reveal">
+ <div class="reveal-box">
+  <div class="studio">CREASCOLA PICTURES • EXCLUSIVE PREMIERE</div>
+  <h2>🎬 TÓTH:<br><span style="color:#e32185">AZ AI ÁRNYÉKÁBAN</span></h2>
+  <p>EZEN A SZOMBATON • 11:00</p>
+  <button class="close" onclick="document.getElementById('reveal').classList.remove('show')">VISSZA A PREMIEROLDALRA</button>
+ </div>
+</div>
+
+<script>
+(() => {
+  // A premier időpontja: 2026. november 28., szombat, 11:00 (a látogató helyi időzónája szerint).
+  const premiere = new Date(2026, 10, 28, 11, 0, 0);
+  const parts = {
+    days: document.getElementById('days'),
+    hours: document.getElementById('hours'),
+    minutes: document.getElementById('minutes'),
+    seconds: document.getElementById('seconds')
+  };
+
+  function updateCountdown() {
+    const remaining = premiere.getTime() - Date.now();
+
+    if (remaining <= 0) {
+      document.getElementById('countdown').innerHTML =
+        '<div style="font-size:15px;letter-spacing:2px;padding:18px">A PREMIER ELKEZDŐDÖTT</div>';
+      window.location.href = '/movie.html';
+      return;
+    }
+
+    const totalSeconds = Math.floor(remaining / 1000);
+    parts.days.textContent = String(Math.floor(totalSeconds / 86400)).padStart(2, '0');
+    parts.hours.textContent = String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0');
+    parts.minutes.textContent = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    parts.seconds.textContent = String(totalSeconds % 60).padStart(2, '0');
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+})();
+</script>
+</body>
+</html>
