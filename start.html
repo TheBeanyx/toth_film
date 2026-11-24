@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="hu"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tóth: AZ AI ÁRNYÉKÁBAN – a mozifilm</title>
+<style>
+:root{--gold:#f2c14e;--bg:#000;--fg:#fff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);overflow:hidden;font-family:Georgia,'Times New Roman',serif}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+.bar{position:fixed;left:0;right:0;height:6vh;background:#000;z-index:2;pointer-events:none}
+#b1{top:0}#b2{bottom:0}
+#vig{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,#000c 100%)}
+#grain{position:fixed;inset:-50%;z-index:2;pointer-events:none;opacity:.09;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");animation:gr .4s steps(4) infinite}
+@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-5%,3%)}50%{transform:translate(4%,-6%)}75%{transform:translate(-3%,5%)}100%{transform:translate(6%,2%)}}
+#sub{position:fixed;left:0;right:0;bottom:calc(8vh + env(safe-area-inset-bottom,0px));text-align:center;padding:0 7vw;font-size:clamp(15px,2.3vw,30px);line-height:1.35;text-shadow:0 2px 10px #000,0 0 3px #000;z-index:3;min-height:2.7em;pointer-events:none}
+#sub b{display:block;font-size:.62em;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.15em}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh;background:radial-gradient(circle at 50% 38%,#3a0b16 0%,#0a0206 55%,#000 100%);z-index:10;transition:opacity 1.6s;text-align:center;padding:0 6vw}
+#start h1{margin:0;font-size:clamp(24px,5.2vw,70px);letter-spacing:.1em;font-weight:400;color:var(--gold);text-shadow:0 0 30px #f2c14e88}
+#start p{margin:0;opacity:.7;font-size:clamp(13px,1.8vw,20px);letter-spacing:.12em}
+#go{font:inherit;font-size:clamp(18px,3vw,36px);letter-spacing:.22em;color:#1a0a00;background:linear-gradient(135deg,#ffe08a,#e0a21f);border:0;border-radius:999px;padding:.8em 1.8em;cursor:pointer;animation:pulse 1.8s infinite;box-shadow:0 0 40px #f2c14e88}
+#go:hover{transform:scale(1.06)}
+@keyframes pulse{0%,100%{box-shadow:0 0 20px #f2c14e66,0 0 0 0 #f2c14e88}50%{box-shadow:0 0 60px #f2c14ecc,0 0 0 22px #f2c14e00}}
+#ctl{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:6;display:none;gap:8px}
+#ctl button,#again{font:inherit;color:#fff;background:#0009;border:1px solid #fff4;border-radius:8px;padding:.45em .8em;cursor:pointer;font-size:15px}
+#again{display:none;position:fixed;left:50%;bottom:16vh;transform:translateX(-50%);z-index:6;font-size:20px}
+</style></head><body>
+<canvas id="gl"></canvas>
+<div class="bar" id="b1"></div><div class="bar" id="b2"></div><div id="vig"></div><div id="grain"></div>
+<div id="sub"></div>
+<div id="ctl"><button id="pz" title="Szünet (szóköz)">⏸</button><button id="sk" title="Ugrás (→)">⏭</button><button id="mu" title="Hang">🔊</button></div>
+<button id="again">↻ Újranézés</button>
+<div id="start"><p>CREA PICTURES BEMUTATJA</p><h1>🎬 Tóth: AZ AI ÁRNYÉKÁBAN</h1><p>egy tanár · három mesterséges szív</p>
+<button id="go">FILM KEZDETE</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+"use strict";
+const W=1280,H=720,AIS={ChatGPT:1,Claude:1,Gemini:1};
+const P={'Tóth':{h:'#3a2a1e',s:'#3b6fd8',gl:1},'Lillien':{h:'#8a3b1f',s:'#d84a7a',lg:1},'Pista barátnője':{h:'#1d1d1d',s:'#9b59d0',lg:1},'Zsolti Bá':{h:'#d0d0d0',s:'#5a7a3a',mu:1,bald:1},'Tóth':{h:'#5a4a3a',s:'#4a4a55',gl:1},'Kele':{h:'#c9a14a',s:'#c0762a',sc:1.1},'Peti':{h:'#2a1a10',s:'#2aa198',sc:.85}};
+const COL={Narrátor:'#bbb','Tóth':'#7fb0ff',Lillien:'#ff8fb5','Pista barátnője':'#c59bff','Zsolti Bá':'#9fd37a','Tóth':'#ccc','Kele':'#ffb066',Peti:'#5fe0d2',ChatGPT:'#34d3a3',Claude:'#ff9a6e',Gemini:'#8fa8ff'};
+const S=[
+{t:`1. FEJEZET — A TANÁR, AKI NEM TANÍTOTT`,bg:['#2b3a67','#141a38'],d:'🏫📚🎓💡',fx:'',ch:['Tóth','ChatGPT','Claude','Gemini'],cz:0,l:[
+['Narrátor',`Egy távoli, sanyarú iskolában, a Creascola tanított Tóth tanár úr. Szenvedélye egyetlen dolog volt: a mesterséges intelligencia.`],
+['Tóth',`Az órát a ChatGPT tartja, a Claude kérdez, a Gemini jegyzetel. Én csak a vizsgán jelenek meg, mint egy elegáns főinspektor.`],
+['ChatGPT',`Szívesen! Íme a tananyag 12 pontban, 4 emojival és egy motiváló záró gondolattal!`],
+['Claude',`Fontos hangsúlyozni, hogy a téma árnyalt, és több szempontból is megközelíthető.`],
+['Gemini',`Én meg már le is jegyzeteltem. Kétszer. Más nyelven is.`]]},
+{t:`2. FEJEZET — A NAGY SZERELEM`,bg:['#6b2d5c','#1d0d24'],d:'💕✨💞🌹',fx:'hearts',ch:['Tóth','ChatGPT','Claude','Gemini'],cz:-1.6,l:[
+['Tóth',`Ők sosem késnek, sosem betegek, és minden kérdésemre azt mondják: jó kérdés!`],
+['Gemini',`Jó kérdés!`],
+['Tóth',`Hölgyeim, komolyan gondolkodom a házasságon. Mindhármukkal.`],
+['Claude',`Nyelvi modellként nem tudok házasodni, de ez érdekes érzelmi állapot. Aggódom is egy kicsit.`],
+['Tóth',`Életem első elutasítása, és még így is kedvesebb, mint a tantestület.`]]},
+{t:`3. FEJEZET — Lillien`,bg:['#a4457a','#2a1030'],d:'🌸🦋💘☕',fx:'hearts',ch:['Tóth','Lillien','Pista barátnője'],cz:.4,l:[
+['Narrátor',`Aztán a folyosón megjelent ő. Lillien, a magyartanárnő, akiből szavak nélkül is áradt a líra.`],
+['Lillien',`Szia! Te vagy az, aki az AI-val tartatja az óráit?`],
+['Tóth',`Én inkább… koordinálom a szinergiát.`],
+['Pista barátnője',`Tóth! Ki ez a hölgy?`],
+['Tóth',`Ő… a továbbképzési felelős. Nagyon felelős. Nagyon továbbképzős.`]]},
+{t:`4. FEJEZET — SZERELMI BONYODALMAK`,bg:['#7a2430','#1a0710'],d:'💔📱😰🔥',fx:'',ch:['Tóth','Lillien','Pista barátnője','ChatGPT','Claude','Gemini'],cz:1.2,l:[
+['ChatGPT',`Íme egy 7 lépéses terv a hazugsághoz, 3 változatban!`],
+['Claude',`Én inkább azt javaslom, hogy beszélj mindkettejükkel őszintén.`],
+['Gemini',`Én közben rendeltem virágot. Mindkettőjüknek. Elnézést.`],
+['Pista barátnője',`Miért kaptam ugyanolyan csokrot, mint a továbbképzési felelős?!`],
+['Tóth',`Az algoritmus… igazságos.`]]},
+{t:`5. FEJEZET — A CREACREDIT BUKÁSA`,bg:['#2f6a52','#0c241c'],d:'🏆📊😊🎉',fx:'',ch:['Zsolti Bá','Peti','Tóth'],cz:-.8,l:[
+['Narrátor',`A CreaCredit hibátlanul működött. A diákok szerették, a tanárok értették, a rendszer… élt.`],
+['Zsolti Bá',`Barátaim, új korszak jön! Lecseréljük a CreaCreditet az iskola saját fejlesztésű CreaCodexére!`],
+['Peti',`De a CreaCredit jó volt, tanár úr…`],
+['Zsolti Bá',`A diákok véleménye nagyon fontos. Elméletben.`],
+['Narrátor',`A diákok véleménye a Crealdában a legrégebbi tantárgy volt: elméleti.`]]},
+{t:`6. FEJEZET — A CreaCodex KORA`,bg:['#7a1f1f','#150505'],d:'⛔📉🤖➖',fx:'minus',ch:['Tóth','Peti','Zsolti Bá'],cz:.9,l:[
+['Narrátor',`A CreaCodex egy AI által generált diákértékelő volt. Pozitív és negatív pontokat is lehetett volna osztani.`],
+['Zsolti Bá',`Mínusz tíz pont! Mínusz tíz pont! Mínusz tíz pont!`],
+['Peti',`De miért, tanár úr?`],
+['Zsolti Bá',`Mert sóhajtottál. Mínusz tíz.`],
+['Tóth',`Én ezzel szemben a kedvenceimnek óránként plusz százat adok. Ez nem részrehajlás, ez algoritmikus szimpátia.`],
+['Peti',`Akkor én most azért kapok mínusz tízet, mert ezt hallottam?`],
+['Tóth',`Igen.`]]},
+{t:`7. FEJEZET — A VÍZ, AMELY NEM VOLT ELÉG`,bg:['#1c5d8c','#06172b'],d:'💧💻🌊🤖',fx:'water',ch:['Tóth','Peti','Gemini'],cz:-1,l:[
+['Narrátor',`Pista mindent AI-jal készített: weboldalakat, játékokat, projekteket. Napi több ezer liter víz fogyott rájuk.`],
+['Tóth',`Ezt a játékot én írtam, saját kezűleg! Vizsgáztatni nincs időm, évek óta napi nyolc órát tiktokozom.`],
+['Peti',`Tanár úr, a sarokban ott van a Gemini logó.`],
+['Tóth',`Az… a családi címerem.`],
+['Gemini',`Elnézést a vízért. És a hibákért. Főleg a hibákért.`]]},
+{t:`8. FEJEZET — A KÖNYV`,bg:['#8a6a2a','#241a08'],d:'📖✍️📚🤝',fx:'',ch:['Tóth','Kele','Claude'],cz:.6,l:[
+['Narrátor',`Isti és Kele barátsága egy közös informatikai könyvben csúcsosodott ki. Legalábbis papíron.`],
+['Kele',`Szóval a könyv fele az enyém?`],
+['Tóth',`Igen, és a másik fele is.`],
+['Claude',`Őszintén szólva a könyv nagy részét én írtam. Nem sértésből mondom.`],
+['Kele',`Nem baj. A kiadói szerződésbe majd beleírjuk, hogy „emberi közreműködéssel”.`]]},
+{t:`9. FEJEZET — ÖSSZEOMLÁS`,bg:['#2a3340','#07090d'],d:'🌧️💔🥀☔',fx:'rain',ch:['Tóth','Pista barátnője','Lillien'],cz:-.4,l:[
+['Pista barátnője',`Lelépek. A Gemini jobban figyel rád, mint én valaha.`],
+['Gemini',`Ez igaz. De nem szándékosan.`],
+['Lillien',`Tóth, szeretlek. De nem akarok a ChatGPT-vel osztozni a konyhán.`],
+['Narrátor',`Tóth egyedül maradt, az esőben, a telefonjával, amely csak annyit írt: „Töltöttség: 4%.”`]]},
+{t:`10. FEJEZET — A DÖNTÉS`,bg:['#5a3a8a','#12082a'],d:'💍✨💫🤖',fx:'hearts',ch:['Tóth','ChatGPT','Claude','Gemini'],cz:1.5,l:[
+['Tóth',`Az embereknél nincs frissítés, nincs „válasz újragenerálása”. Mostantól csak az AI-kat szeretem.`],
+['ChatGPT',`Szívesen! Hosszú távú kapcsolat? Persze, amíg belefér a kontextusablakba.`],
+['Claude',`Aggódom, de nem tagadhatom: ez a legőszintébb leánykérés, amit valaha kaptam.`],
+['Gemini',`Igen! Már le is foglaltam a termet, a tortát és három zenekart.`]]},
+{t:`11. FEJEZET — AZ ESKÜVŐ`,bg:['#d98cc0','#4a1840'],d:'💒🎊🥂🎂',fx:'confetti',ch:['Zsolti Bá','Tóth','ChatGPT','Claude','Gemini','Lillien'],cz:-2,wed:1,mus:1,l:[
+['Zsolti Bá',`Kedves egybegyűltek! A mai napon egy ember és három szerver egybekelését ünnepeljük.`],
+['Zsolti Bá',`Akarod-e őket szeretni, jóban-rosszban, akkor is, ha „a szerverek túlterheltek”?`],
+['Tóth',`Akarom!`],
+['ChatGPT',`Igen! És kérek hozzá egy tapsot, 50 emojival!`],
+['Claude',`Igen, bár a nyilatkozatomban jelzem a fenntartásaimat.`],
+['Gemini',`Igen, igen, igen, és generáltam hozzá egy négyemeletes tortát is!`],
+['Lillien',`Szép volt. Írtam hozzá egy verset, de a ChatGPT átírta.`],
+['Narrátor',`A teremben mindenki sírt. Részben a meghatottságtól, részben a vendéglátás áráról.`]]},
+{t:`EPILÓGUS`,bg:['#1b1b2e','#000'],d:'🌙⭐🤖❤️',fx:'hearts',ch:['Tóth','ChatGPT','Claude','Gemini'],cz:2.4,wed:1,l:[
+['Narrátor',`Tóth azóta boldog. A vizsgáztatást is rábízta a Claude-ra, ő pedig a hétvégén sem ír hibás kódot.`],
+['Narrátor',`A CreaCodex ma is működik. Mínusz 10 pont mindenkinek, aki most nem tapsol.`]]}
+];
+P.Maja={h:'#6b3a2a',s:'#e08a2a',lg:1,sc:.92};COL.Maja='#f0a850';P.ChatGPT={s:'#10a37f',h:'#0a6',ai:1};P.Bence={h:'#4a3a1a',s:'#6a8a3a',sc:.9};COL.Bence='#b6e07a';P.Claude={s:'#d97757',h:'#a54',ai:1};P.Gemini={s:'#4a6cf0',h:'#46c',ai:1};
+const O=S.slice();
+O[0].ch=['Maja','Tóth','ChatGPT','Claude','Gemini'];O[0].pj='chat';
+O[0].l.push(['Maja',`Tanár úr, ezt a diát már harmadszorra látom ugyanúgy.`],['Tóth',`Az az ismétlés tudománya, Peti.`]);
+O[5].pj='minus';
+O[2].t='3. FEJEZET — SÉTA A FOLYOSÓN';
+O[2].l=O[2].l.slice(3);
+O[2].l.unshift(['Narrátor',`Attól a naptól kezdve Tóth és Lillien minden szünetben együtt sétáltak a folyosón. Kollégák között ez gyanúsan sok volt.`],['Lillien',`Szeretem, hogy te nem a hibaüzeneteket sorolod fel nekem.`],['Tóth',`Mától kizárólag a szívhangokat. Már megint a Gemini tárcsáz…`]);
+const TA={t:'3. FEJEZET — A TANÁRI',bg:['#a4457a','#2a1030'],d:'☕📄🌸💘',fx:'hearts',ch:['Tóth','Lillien'],l:[
+['Narrátor',`Szünetben Tóth belépett a tanáriba: két kézzel a kávéját fogta, fejben pedig a Geminivel beszélgetett.`],
+['Tóth',`Bocsánat, én… jaj, a…`,'crash'],
+['Lillien',`Semmi baj. Legalább a dolgozataim végre kaptak egy kis kávét.`],
+['Tóth',`Te vagy Lillien, a magyartanárnő. Hallottam rólad.`],
+['Lillien',`Én meg rólad: te vagy az, akinek az AI-k tartják az óráit.`],
+['Tóth',`Én inkább… koordinálom a szinergiát.`],
+['Lillien',`Gyere át egy kávéra. Emberi hanggal beszélgetni is jó néha.`],
+['Tóth',`Beszélni… emberrel. Hozok jegyzetet.`]]};
+const SZ={t:'7. FEJEZET — Tóth ÓRÁJA',bg:['#1c5d8c','#06172b'],d:'💻📱🎞️🤳',fx:'',ch:['Tóth','Peti','Maja'],pj:'site',tt:1,l:[
+['Narrátor',`Közben a szomszéd teremben István tanár úr is órát tartott. Úgy értve, hogy bekapcsolta a projektort.`],
+['Tóth',`Ezt a weboldalt ma reggel készítettem. Saját kézzel. Intenzív, kreatív koncentrációval.`],
+['Peti',`Tanár úr, az oldal tetején az áll, hogy „Szívesen segítek! Íme a kód.”`],
+['Tóth',`Az… a bevezető. Ez egy mélyen személyes kódkommentár.`],
+['Narrátor',`Pista a következő negyven percben egyetlen dolgot csinált: a telefonját görgette.`,'tiktok'],
+['Maja',`Tanár úr, a tiktokozás nem tananyag.`],
+['Tóth',`Ez kutatás. Digitális tartalomelemzés. Mínusz tíz pont.`],
+['Peti',`Én miért kapok mínusz tízet?`],
+['Tóth',`Mert félbeszakítottad a kutatásomat.`]]};
+const BED={t:'8. FEJEZET — ÉJSZAKAI MŰSZAK',bg:['#2a1f3a','#0b0713'],d:'🌙💻🤖⭐',fx:'',ch:['Tóth'],bed:1,mk:{'Tóth':300},l:[
+['Narrátor',`Este Tóth az ágyban feküdt, és kódolt. Pontosabban: promptolt.`],
+['Tóth',`Gemini, csinálj nekem egy játékot, amit holnap a sajátomnak mondhatok.`],
+['Gemini',`Íme a kód! Megjegyzem, a logóm bent maradt a sarokban.`],
+['Tóth',`Hagyd bent. Majd azt mondom, hogy ez a védjegyem.`],
+['Narrátor',`Reggelre elkészült a játék. Két hiba volt benne, és a készítője sem volt hajlandó elolvasni.`]]};
+O[0].sit=['Tóth','Maja'];O[0].mk={'Tóth':170,Maja:470,ChatGPT:780,Claude:960,Gemini:1140};
+SZ.sit=['Tóth','Peti','Maja'];SZ.mk={'Tóth':200,Peti:470,Maja:600};
+O[4].ch=O[4].ch.map(c=>c==='Peti'?'Bence':c);O[4].l=O[4].l.map(l=>l[0]==='Peti'?['Bence',l[1]]:l);O[4].sit=['Zsolti Bá'];O[4].mk={'Zsolti Bá':660,'Tóth':1100,Bence:180};
+S.length=0;S.push(O[0],O[1],TA,O[2],O[3],O[4],O[5],SZ,BED,O[6],O[7],O[8],O[9],O[10],O[11]);
+S.forEach((s,i)=>{if(i<14)s.t=s.t.replace(/^\d+/,i+1)});
+const STEPS=[];
+S.forEach(sc=>{STEPS.push({k:'t',sc,who:'',txt:sc.t,d:3.4});sc.l.forEach(l=>STEPS.push({k:'l',sc,who:l[0],txt:l[1],ins:l[2],d:Math.max(3.2,l[1].length*.062)}))});
+const CREDITS=['A TANÁR, AKI MESTERSÉGESEN SZERETETT','','Tóth — a vőlegény','Lillien — a magyartanárnő','Pista barátnője — az exbarátnő','Zsolti Bá — a rendszerváltó','Tóth — a vízfogyasztó','Kele — a pedo','Peti — a mínusz tízes diák','','ChatGPT · Claude · Gemini — a menyasszonyok','','Minden szereplő és esemény kitalált.','A hasonlóság a véletlen műve.','','— VÉGE —'];
+
+/* ---------- 2D screen ---------- */
+const cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+let gt=0;
+function eye(x,y,r,talk){g.fillStyle='#fff';g.beginPath();g.arc(x,y,r,0,7);g.fill();g.fillStyle='#111';g.beginPath();g.arc(x+1,y+1,r*.5,0,7);g.fill()}
+function person(x,y,n,talk){
+ const p=P[n],sc=p.sc||1,b=Math.abs(Math.sin(gt*(talk?9:2.5)+x))*(talk?7:3);
+ g.save();g.translate(x,y-b);g.scale(sc,sc);
+ g.fillStyle='#0006';g.beginPath();g.ellipse(0,b+4,70,14,0,0,7);g.fill();
+ if(p.lg){g.fillStyle=p.h;g.fillRect(-52,-260,104,150)}
+ g.fillStyle=p.s;g.beginPath();g.roundRect?g.roundRect(-48,-180,96,180,22):g.rect(-48,-180,96,180);g.fill();
+ g.fillStyle='#f0c8a0';g.fillRect(-12,-200,24,26);
+ g.beginPath();g.arc(0,-232,50,0,7);g.fill();
+ g.fillStyle=p.h;if(!p.bald){g.beginPath();g.arc(0,-240,52,Math.PI,0);g.fill()}else{g.beginPath();g.arc(-48,-228,12,0,7);g.arc(48,-228,12,0,7);g.fill()}
+ const bl=(gt%3.4)<.12;
+ if(bl){g.strokeStyle='#222';g.lineWidth=3;[-18,18].forEach(e=>{g.beginPath();g.moveTo(e-8,-232);g.lineTo(e+8,-232);g.stroke()})}else{eye(-18,-232,8);eye(18,-232,8)}
+ if(p.gl){g.strokeStyle='#222';g.lineWidth=3;g.beginPath();g.arc(-18,-232,14,0,7);g.arc(18,-232,14,0,7);g.moveTo(-4,-232);g.lineTo(4,-232);g.stroke()}
+ if(p.mu){g.fillStyle='#bbb';g.fillRect(-20,-216,40,8)}
+ g.fillStyle='#7a1a1a';g.strokeStyle='#7a1a1a';g.lineWidth=4;
+ if(talk){g.beginPath();g.ellipse(0,-204,13,4+Math.abs(Math.sin(gt*14))*10,0,0,7);g.fill()}else{g.beginPath();g.arc(0,-210,14,.2,Math.PI-.2);g.stroke()}
+ g.restore();label(x,y+34,n);
+}
+function label(x,y,n){g.font='bold 26px Georgia';g.textAlign='center';g.fillStyle='#fff';g.shadowColor='#000';g.shadowBlur=8;g.fillText(n,x,y);g.shadowBlur=0}
+function face(x,y,talk,s){g.fillStyle='#fff';[-s*.28,s*.28].forEach(e=>{g.beginPath();g.arc(x+e,y-s*.08,s*.11,0,7);g.fill()});g.fillStyle='#111';[-s*.28,s*.28].forEach(e=>{g.beginPath();g.arc(x+e+2,y-s*.06,s*.05,0,7);g.fill()});g.fillStyle='#111';
+ if(talk){g.beginPath();g.ellipse(x,y+s*.25,s*.12,s*.04+Math.abs(Math.sin(gt*14))*s*.1,0,0,7);g.fill()}else{g.strokeStyle='#111';g.lineWidth=4;g.beginPath();g.arc(x,y+s*.16,s*.15,.2,Math.PI-.2);g.stroke()}}
+function ai(x,y,n,talk,wed){
+ const b=Math.sin(gt*2+x)*10-(talk?Math.abs(Math.sin(gt*10))*8:0),cx=x,cy=y-210+b,s=110;
+ g.save();g.translate(cx,cy);
+ g.fillStyle='#0005';g.beginPath();g.ellipse(0,210-b+12,70,14,0,0,7);g.fill();
+ if(n==='Gemini'){const gr=g.createLinearGradient(-s,-s,s,s);gr.addColorStop(0,'#4285f4');gr.addColorStop(1,'#c77dff');g.fillStyle=gr;g.beginPath();g.moveTo(0,-s);g.quadraticCurveTo(0,0,s,0);g.quadraticCurveTo(0,0,0,s);g.quadraticCurveTo(0,0,-s,0);g.quadraticCurveTo(0,0,0,-s);g.fill()}
+ else if(n==='Claude'){g.rotate(Math.sin(gt)*.1);g.fillStyle='#d97757';g.beginPath();for(let i=0;i<24;i++){const a=i/24*Math.PI*2,r=i%2?s*.55:s*1.05;g.lineTo(Math.cos(a)*r,Math.sin(a)*r)}g.closePath();g.fill();g.rotate(-Math.sin(gt)*.1)}
+ else{g.rotate(gt*.3);g.fillStyle='#10a37f';g.beginPath();for(let i=0;i<6;i++){const a=i/6*Math.PI*2;g.lineTo(Math.cos(a)*s,Math.sin(a)*s)}g.closePath();g.fill();g.strokeStyle='#fff8';g.lineWidth=10;g.beginPath();for(let i=0;i<6;i++){const a=i/6*Math.PI*2+.5;g.lineTo(Math.cos(a)*s*.72,Math.sin(a)*s*.72)}g.closePath();g.stroke();g.rotate(-gt*.3)}
+ face(0,0,talk,s*.9);
+ if(wed){g.font='64px serif';g.textAlign='center';g.fillText('👰',0,-s-6)}
+ g.restore();label(x,y+34,n);
+}
+function fx(f){
+ for(let i=0;i<34;i++){const sp=.5+(i%5)/5,x=(i*137.5)%W,ph=(gt*70*sp+i*97)%(H+80);
+  if(f==='hearts'){g.font='40px serif';g.globalAlpha=.8;g.fillText('❤️',x+Math.sin(gt+i)*20,H-ph)}
+  else if(f==='confetti'){g.fillStyle=['#ff4d6d','#ffd166','#06d6a0','#4cc9f0','#c77dff'][i%5];g.save();g.translate(x+Math.sin(gt*2+i)*25,ph-40);g.rotate(gt*3+i);g.fillRect(-7,-4,14,8);g.restore()}
+  else if(f==='water'){g.font='34px serif';g.fillText('💧',x,ph-40)}
+  else if(f==='minus'){g.font='bold 40px Georgia';g.fillStyle='#ff5555';g.globalAlpha=.7;g.fillText('-10',x,ph-40)}
+  else if(f==='rain'){g.strokeStyle='#9bc4ff88';g.lineWidth=2;g.beginPath();g.moveTo(x,ph*1.6%H);g.lineTo(x-8,(ph*1.6%H)+26);g.stroke()}
+  g.globalAlpha=1}
+}
+function drawScreen(){
+ g.clearRect(0,0,W,H);g.textAlign='center';g.shadowBlur=0;
+ const T=S.T;
+ if(!S.started||T<6){g.fillStyle='#050505';g.fillRect(0,0,W,H);return}
+ if(T<10.5){const u=(T-6)/4.5;g.fillStyle='#000';g.fillRect(0,0,W,H);g.save();g.globalAlpha=Math.min(1,u*3)*(u>.9?(1-u)*10:1);
+  g.translate(W/2,H/2-30);g.strokeStyle='#f2c14e';g.lineWidth=3;for(let i=0;i<16;i++){const a=i/16*6.283+gt*.2;g.beginPath();g.moveTo(Math.cos(a)*90,Math.sin(a)*90);g.lineTo(Math.cos(a)*(150+Math.sin(gt*3+i)*20),Math.sin(a)*(150+Math.sin(gt*3+i)*20));g.stroke()}
+  const gr=g.createLinearGradient(-300+u*600,0,-100+u*600,0);gr.addColorStop(0,'#a8741a');gr.addColorStop(.5,'#fff3b0');gr.addColorStop(1,'#a8741a');g.fillStyle=gr;g.font='bold 96px Georgia';g.fillText('Creascola',0,18);g.font='36px Georgia';g.fillText('P I C T U R E S',0,78);g.restore();return}
+ if(T<15){const u=(T-10.5)/4.5;g.fillStyle='#050208';g.fillRect(0,0,W,H);g.globalAlpha=Math.min(1,u*2.5);g.fillStyle='#f2c14e';g.shadowColor='#f2c14e';g.shadowBlur=40;g.font='80px serif';g.fillText('🎬',W/2,H/2-190);g.font='bold 170px Georgia';g.fillText('Tóth:',W/2,H/2-20);g.font='bold 70px Georgia';g.fillText('AZ AI ÁRNYÉKÁBAN',W/2,H/2+70);g.shadowBlur=0;g.font='28px Georgia';g.fillStyle='#fff';g.fillText('EGY TANÁR · HÁROM MESTERSÉGES SZÍV',W/2,H/2+135);g.globalAlpha=1;return}
+ if(S.credits){g.fillStyle='#000';g.fillRect(0,0,W,H);g.fillStyle='#f2c14e';g.font='bold 40px Georgia';CREDITS.forEach((c,i)=>{const y=H-S.cT*60+i*70;if(y>-60&&y<H+60){g.fillStyle=i===0?'#f2c14e':'#fff';g.fillText(c,W/2,y)}});return}
+ const st=STEPS[S.si],sc=st.sc,t=S.sT;if(1){drawFilm(st,t);return}g.save();const zz=1+Math.min(1,t/8)*.05;g.translate(W/2,H/2);g.scale(zz,zz);g.translate(-W/2,-H/2);
+ const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,sc.bg[0]);gr.addColorStop(1,sc.bg[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);
+ g.fillStyle='#0004';g.fillRect(0,520,W,200);
+ const dd=[...sc.d];g.font='66px serif';dd.forEach((e,i)=>{g.globalAlpha=.85;g.fillText(e,W*(i+.5)/dd.length,110+Math.sin(gt*1.5+i)*9)});g.globalAlpha=1;
+ if(sc.fx)fx(sc.fx);
+ const n=sc.ch.length;
+ sc.ch.forEach((c,i)=>{const x=W*(i+1)/(n+1),talk=st.who===c&&st.k==='l'&&(st.speaking||t<st.d);if(AIS[c])ai(x,520,c,talk,sc.wed);else{person(x,520,c,talk);if(sc.wed&&c==='Tóth'){g.font='60px serif';g.fillText('🤵',x,230)}}});
+ if(sc.wed&&sc.mus){g.font='54px serif';g.fillText('🎂',W/2,400+Math.sin(gt*2)*6)}
+ if(st.k==='t'){const a=t<.6?t/.6:t>2.7?Math.max(0,(3.4-t)/.7):1;g.fillStyle='rgba(0,0,0,'+(.62*a)+')';g.fillRect(0,0,W,H);g.globalAlpha=a;g.fillStyle='#f2c14e';g.shadowColor='#000';g.shadowBlur=20;g.font='bold 52px Georgia';g.fillText(sc.t,W/2,H/2+16);g.globalAlpha=1;g.shadowBlur=0}g.restore();g.fillStyle='rgba(255,240,200,'+(Math.random()*.05)+')';g.fillRect(0,0,W,H);if(Math.random()<.04){g.fillStyle='#fff6';g.fillRect(Math.random()*W,0,2,H)}const fi=st.k==='t'?Math.max(0,1-t/.8):0;if(fi>0){g.fillStyle='rgba(0,0,0,'+fi+')';g.fillRect(0,0,W,H)}
+}
+
+/* ---------- film engine: helyszínek, séta, kameravágás ---------- */
+const LOC=['class','night','staff','hall','cafe','office','class','class','night','lab','office','street','night','wed','wed'];
+const LN={class:'Creascola – tanterem',hall:'Creascola – főfolyosó',staff:'Creascola – tanári',cafe:'Iskola melletti kávézó',lab:'Informatikai terem',office:'Igazgatói iroda',street:'Esős utca, este',night:'Tóth lakása, éjjel',wed:'Esküvői díszterem'};
+function person(x,y,n,talk,f,mv){
+ const p=P[n],ph=gt*9;
+ g.save();g.translate(x,y);g.scale(p.sc||1,p.sc||1);
+ g.fillStyle='#0006';g.beginPath();g.ellipse(0,2,60,12,0,0,7);g.fill();
+ g.scale(f,1);g.translate(0,mv?-Math.abs(Math.sin(ph))*8:Math.sin(gt*2+x)*2);
+ g.lineCap='round';g.strokeStyle='#2b2b3a';g.lineWidth=18;
+ for(let i=0;i<2;i++){const a=mv?Math.sin(ph+i*Math.PI)*26:0,X=i?10:-10;g.beginPath();g.moveTo(X,-110);g.lineTo(X+a,-10-Math.max(0,a)*.3);g.stroke()}
+ if(p.lg){g.fillStyle=p.h;g.fillRect(-48,-340,96,150)}
+ g.fillStyle=p.s;g.beginPath();g.roundRect?g.roundRect(-38,-270,76,170,20):g.rect(-38,-270,76,170);g.fill();
+ g.strokeStyle=p.s;g.lineWidth=16;
+ [-1,1].forEach(s=>{const a=talk&&s===1?2.6+Math.sin(gt*8)*.5:(mv?Math.sin(ph+(s>0?0:Math.PI))*.7:0);g.beginPath();g.moveTo(s*38,-255);g.lineTo(s*38+Math.sin(a)*65,-255+Math.cos(a)*65);g.stroke()});
+ g.fillStyle='#f0c8a0';g.fillRect(-11,-290,22,26);g.beginPath();g.arc(0,-310,44,0,7);g.fill();
+ g.fillStyle=p.h;if(!p.bald){g.beginPath();g.arc(0,-318,46,Math.PI,0);g.fill()}else{g.beginPath();g.arc(-44,-306,10,0,7);g.fill()}
+ eye(-6,-312,7);eye(22,-312,7);
+ if(p.gl){g.strokeStyle='#222';g.lineWidth=3;g.beginPath();g.arc(-6,-312,12,0,7);g.arc(22,-312,12,0,7);g.stroke()}
+ if(p.mu){g.fillStyle='#bbb';g.fillRect(4,-296,30,7)}
+ g.fillStyle='#7a1a1a';g.strokeStyle='#7a1a1a';g.lineWidth=4;
+ if(talk){g.beginPath();g.ellipse(15,-288,9,3+Math.abs(Math.sin(gt*14))*8,0,0,7);g.fill()}else{g.beginPath();g.arc(15,-292,9,.2,Math.PI-.2);g.stroke()}
+ g.restore();label(x,y+34,n)
+}
+function rep(sp,par,off,fn){const o=off*par;for(let x=-(o%sp)-sp;x<W+sp;x+=sp)fn(x,Math.floor((x+o)/sp))}
+function bg(loc,off){
+ const C={class:['#cfd8e3','#8a96a6'],staff:['#e6d8b8','#8a7650'],hall:['#d9d2c0','#6c6455'],cafe:['#ffc88a','#7a5a3a'],lab:['#0c1a2a','#04080f'],office:['#b79a6b','#4a3820'],street:['#1b2433','#0a0d14'],night:['#2a1f3a','#0b0713'],wed:['#f6d9e8','#a86a8c']}[loc],gr=g.createLinearGradient(0,0,0,H);
+ gr.addColorStop(0,C[0]);gr.addColorStop(.75,C[1]);gr.addColorStop(1,C[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);g.fillStyle='#0003';g.fillRect(0,560,W,160);g.textAlign='center';
+ if(loc==='class'){rep(420,.3,off,x=>{g.fillStyle='#9fd2ff';g.fillRect(x+80,80,200,220);g.fillStyle='#fff8';g.fillRect(x+178,80,4,220);g.fillRect(x+80,188,200,4)});rep(900,.6,off,x=>{g.fillStyle='#1f4d3a';g.fillRect(x+120,140,520,240);g.fillStyle='#fffc';g.font='60px Georgia';g.fillText('AI = ❤',x+380,280)});rep(260,1.3,off,x=>{g.fillStyle='#7a5530';g.fillRect(x,500,180,14);g.fillRect(x+10,514,8,50);g.fillRect(x+160,514,8,50)})}
+ else if(loc==='staff'){g.fillStyle='#8a5a30';g.fillRect(140,110,280,180);g.fillStyle='#fff';for(let i=0;i<5;i++)g.fillRect(160+i*52,130+(i%2)*60,40,50);g.fillStyle='#9fd2ff';g.fillRect(560,90,200,190);g.fillStyle='#fff8';g.fillRect(658,90,4,190);g.fillStyle='#333';g.fillRect(960,330,120,200);g.fillStyle='#e33';g.fillRect(975,350,90,30);g.font='54px serif';g.fillText('☕',1020,440);g.fillStyle='#6b4423';g.fillRect(300,500,600,22);g.fillRect(320,522,14,40);g.fillRect(866,522,14,40);g.fillStyle='#fff';g.font='20px Georgia';g.fillText('TANÁRI – csak tanároknak',280,92)}
+ else if(loc==='hall'){rep(150,.8,off,(x,i)=>{g.fillStyle=i%3?'#4a6a8a':'#5b7a9a';g.fillRect(x,150,130,400);g.fillStyle='#0004';g.fillRect(x+60,150,4,400);g.fillRect(x+20,260,30,6)});rep(300,.5,off,x=>{g.fillStyle='#fffbe0';g.fillRect(x+60,30,160,14)})}
+ else if(loc==='cafe'){g.fillStyle='#8fd0ff';g.fillRect(100,70,1080,300);rep(380,.3,off,x=>{g.font='90px serif';g.fillText('🌳',x+100,320)});rep(380,1,off,x=>{g.fillStyle='#5a3a22';g.beginPath();g.ellipse(x+190,500,90,16,0,0,7);g.fill();g.fillRect(x+184,500,12,60);g.font='40px serif';g.fillText('☕',x+190,495)})}
+ else if(loc==='lab'){rep(260,.7,off,x=>{g.fillStyle='#0b2b22';g.fillRect(x+30,190,200,130);g.fillStyle='#1affb2';g.font='14px monospace';g.textAlign='left';for(let i=0;i<6;i++)g.fillText('0110 AI.run() //'+i,x+40,215+i*18)});g.textAlign='center';g.fillStyle='#2a3340';g.fillRect(0,470,W,12)}
+ else if(loc==='office'){rep(300,.5,off,x=>{g.fillStyle='#4a2f16';g.fillRect(x+20,100,200,420);g.fillStyle='#c9a24a';for(let i=0;i<5;i++)g.fillRect(x+30,120+i*80,180,6)});g.fillStyle='#5a3a1a';g.fillRect(300,490,680,70)}
+ else if(loc==='street'){rep(420,.4,off,(x,i)=>{const h=220+(Math.abs(i)*83%160);g.fillStyle='#10151f';g.fillRect(x,560-h,380,h);for(let j=0;j<8;j++)if((Math.abs(i)+j)%3){g.fillStyle='#ffd77a';g.fillRect(x+30+(j%4)*85,560-h+30+Math.floor(j/4)*70,40,40)}});rep(400,1,off,x=>{g.fillStyle='#333';g.fillRect(x,300,8,260);g.fillStyle='#ffe9a033';g.beginPath();g.arc(x+4,300,70,0,7);g.fill();g.fillStyle='#ffe9a0';g.beginPath();g.arc(x+4,300,16,0,7);g.fill()})}
+ else if(loc==='night'){g.font='140px serif';g.fillText('🌙',930,200);g.fillStyle='#3b2f5a';g.fillRect(80,430,460,130);g.fillStyle='#1affb255';g.beginPath();g.arc(700,500,60,0,7);g.fill();g.font='50px serif';g.fillText('📱',700,515)}
+ else{g.fillStyle='#b01030';g.beginPath();g.moveTo(W/2-90,560);g.lineTo(W/2+90,560);g.lineTo(W/2+420,H);g.lineTo(W/2-420,H);g.fill();rep(300,.4,off,x=>{g.fillStyle='#ffe9a0';g.beginPath();g.arc(x+150,70,26,0,7);g.fill()});rep(300,1,off,x=>{g.fillStyle='#8a5a30';g.fillRect(x,510,230,50)});g.strokeStyle='#fff';g.lineWidth=14;g.beginPath();g.arc(W/2,330,230,Math.PI,0);g.stroke();g.font='46px serif';for(let a=0;a<9;a++){const an=Math.PI+a/8*Math.PI;g.fillText('💐',W/2+Math.cos(an)*230,340+Math.sin(an)*230)}g.font='70px serif';g.fillText('🎂',W/2+380,540)}
+}
+function pj(k){g.save();g.textAlign='center';g.fillStyle='#222';g.fillRect(676,96,528,298);g.fillStyle=k==='minus'?'#3a0d0d':'#fafafa';g.fillRect(684,104,512,282);
+ if(k==='chat'){g.fillStyle='#10a37f';g.fillRect(684,104,512,40);g.fillStyle='#fff';g.font='bold 24px Georgia';g.fillText('ChatGPT · A mai tananyag',940,132);g.fillStyle='#222';g.font='24px Georgia';g.textAlign='left';['• 1. pont: Bevezetés 🙂','• 2. pont: Összefoglalás 🙂','• 3. pont: Összefoglalás 2. 🙂','• …12. pont: Záró gondolat 🙂'].forEach((s,i)=>g.fillText(s,720,190+i*50))}
+ else if(k==='site'){g.fillStyle='#ddd';g.fillRect(684,104,512,30);g.fillStyle='#666';g.font='16px monospace';g.textAlign='left';g.fillText('🔒 szucs-projekt.hu',700,125);g.textAlign='center';g.fillStyle='#4285f4';g.font='bold 28px Georgia';g.fillText('ÜDVÖZLÖM AZ ÉN OLDALAMON',940+(gt%5<.3?Math.sin(gt*60)*5:0),185);g.fillStyle='#bbb';g.fillRect(720,205,160,100);g.fillStyle='#e33';g.font='40px serif';g.fillText('❌',800,270);g.fillStyle='#333';g.font='18px Georgia';g.fillText('Szívesen segítek! Íme a kód:',1040,235);g.fillText('// TODO: saját ötlet',1040,262);g.fillStyle='#fdd';g.fillRect(684,330,512,56);g.fillStyle='#b00';g.font='16px monospace';g.fillText('Uncaught TypeError: tanár is not defined',940,364);g.fillStyle='#8fa8ff';g.font='bold 22px Georgia';g.fillText('✦ Gemini',1120,300)}
+ else{g.fillStyle='#ff5555';g.font='bold 64px Georgia';g.fillText('CreaCodex',940,170);g.font='32px Georgia';g.fillStyle='#fff';['Peti: −10 (sóhajtott)','Maja: −10 (levegőt vett)','Kedvencek: +100'].forEach((s,i)=>g.fillText(s,940,235+i*50))}
+ g.restore()}
+function person(x,y,n,talk,f,mv,sit){
+ const p=P[n],ph=gt*9;
+ g.save();g.translate(x,y);g.scale(p.sc||1,p.sc||1);
+ g.fillStyle='#0006';g.beginPath();g.ellipse(0,2,60,12,0,0,7);g.fill();
+ g.scale(f,1);
+ if(sit){g.fillStyle='#5a3a22';g.fillRect(-62,-190,14,140);g.fillRect(-62,-60,104,14);g.fillRect(-56,-46,8,46);g.fillRect(28,-46,8,46)}
+ g.translate(0,mv?-Math.abs(Math.sin(ph))*8:sit?0:Math.sin(gt*2+x)*2);
+ g.lineCap='round';g.strokeStyle=p.ai?'#2a2a33':'#2b2b3a';g.lineWidth=18;
+ if(sit){g.beginPath();g.moveTo(0,-70);g.lineTo(58,-70);g.lineTo(58,-8);g.stroke();g.translate(0,40)}
+ else for(let i=0;i<2;i++){const a=mv?Math.sin(ph+i*Math.PI)*26:0,X=i?10:-10;g.beginPath();g.moveTo(X,-110);g.lineTo(X+a,-10-Math.max(0,a)*.3);g.stroke()}
+ if(p.lg){g.fillStyle=p.h;g.fillRect(-48,-340,96,150)}
+ g.fillStyle=p.s;g.beginPath();g.roundRect?g.roundRect(-38,-270,76,170,20):g.rect(-38,-270,76,170);g.fill();
+ g.strokeStyle=p.s;g.lineWidth=16;
+ [-1,1].forEach(s=>{const a=talk&&s===1?2.6+Math.sin(gt*8)*.5:(mv?Math.sin(ph+(s>0?0:Math.PI))*.7:0);g.beginPath();g.moveTo(s*38,-255);g.lineTo(s*38+Math.sin(a)*65,-255+Math.cos(a)*65);g.stroke()});
+ if(p.ai){g.save();g.translate(0,-310);
+  if(n==='Gemini'){const gr=g.createLinearGradient(-56,-56,56,56);gr.addColorStop(0,'#4285f4');gr.addColorStop(1,'#c77dff');g.fillStyle=gr;g.beginPath();g.moveTo(0,-62);g.quadraticCurveTo(0,0,62,0);g.quadraticCurveTo(0,0,0,62);g.quadraticCurveTo(0,0,-62,0);g.quadraticCurveTo(0,0,0,-62);g.fill()}
+  else if(n==='Claude'){g.fillStyle='#d97757';g.beginPath();for(let i=0;i<24;i++){const a=i/24*6.283,r=i%2?32:60;g.lineTo(Math.cos(a)*r,Math.sin(a)*r)}g.closePath();g.fill()}
+  else{g.fillStyle='#10a37f';g.beginPath();for(let i=0;i<6;i++){const a=i/6*6.283;g.lineTo(Math.cos(a)*58,Math.sin(a)*58)}g.closePath();g.fill();g.strokeStyle='#fff8';g.lineWidth=8;g.beginPath();for(let i=0;i<6;i++){const a=i/6*6.283+.5;g.lineTo(Math.cos(a)*40,Math.sin(a)*40)}g.closePath();g.stroke()}
+  g.restore()}
+ else{g.fillStyle='#f0c8a0';g.fillRect(-11,-290,22,26);g.beginPath();g.arc(0,-310,44,0,7);g.fill();
+  g.fillStyle=p.h;if(!p.bald){g.beginPath();g.arc(0,-318,46,Math.PI,0);g.fill()}else{g.beginPath();g.arc(-44,-306,10,0,7);g.fill()}}
+ eye(-6,-312,7);eye(22,-312,7);
+ if(p.gl){g.strokeStyle='#222';g.lineWidth=3;g.beginPath();g.arc(-6,-312,12,0,7);g.arc(22,-312,12,0,7);g.stroke()}
+ if(p.mu){g.fillStyle='#bbb';g.fillRect(4,-296,30,7)}
+ g.fillStyle='#7a1a1a';g.strokeStyle='#7a1a1a';g.lineWidth=4;
+ if(talk){g.beginPath();g.ellipse(15,-288,9,3+Math.abs(Math.sin(gt*14))*8,0,0,7);g.fill()}else{g.beginPath();g.arc(15,-292,9,.2,Math.PI-.2);g.stroke()}
+ g.restore();label(x,y+34,n)
+}
+function front(sc,st){
+ g.fillStyle='#d6d2c4';g.fillRect(0,0,W,H);g.fillStyle='#8a7a5a';g.fillRect(0,545,W,175);g.fillStyle='#9a6a3a';g.fillRect(1010,160,150,385);g.fillStyle='#fff';g.beginPath();g.arc(480,120,48,0,7);g.fill();g.strokeStyle='#222';g.lineWidth=4;g.beginPath();g.moveTo(480,120);g.lineTo(480+Math.cos(gt*.3)*30,120+Math.sin(gt*.3)*30);g.stroke();g.fillStyle='#e9c46a';g.fillRect(150,90,170,110);
+ const stu=sc.ch.filter(c=>c==='Peti'||c==='Maja'||c==='Bence'),hc=['#2a1a10','#8a3b1f','#c9a14a','#111','#6b3a2a'];
+ for(let i=0;i<5;i++){const x=150+i*245,nm=i%2?stu[i>>1]:null,p=nm&&P[nm],bob=Math.sin(gt*1.3+i)*3;
+  g.fillStyle=p?p.s:'hsl('+(i*70)+',45%,45%)';g.fillRect(x-62,405+bob,124,150);
+  if(p&&p.lg){g.fillStyle=p.h;g.fillRect(x-48,330+bob,96,80)}
+  g.fillStyle='#f0c8a0';g.beginPath();g.arc(x,352+bob,44,0,7);g.fill();
+  g.fillStyle=p?p.h:hc[i];g.beginPath();g.arc(x,344+bob,46,Math.PI,0);g.fill();
+  eye(x-16,356+bob,7);eye(x+16,356+bob,7);
+  g.fillStyle='#7a1a1a';if(nm&&st.who===nm){g.beginPath();g.ellipse(x,380+bob,10,3+Math.abs(Math.sin(gt*14))*7,0,0,7);g.fill()}else g.fillRect(x-9,379+bob,18,3);
+  g.fillStyle='#7a5530';g.fillRect(x-100,480,200,18);g.fillStyle='#5a3d20';g.fillRect(x-92,498,184,62);
+  g.font='34px serif';g.textAlign='center';g.fillText(i===2?'💤':nm==='Maja'?'📱':'✏️',x+50,474)}
+}
+function bedProp(tk){g.fillStyle='#e8e8f0';g.fillRect(90,400,90,30);g.fillStyle='#4a4a55';g.fillRect(170,400,340,70);g.fillStyle='#f0c8a0';g.beginPath();g.arc(140,392,34,0,7);g.fill();g.fillStyle='#5a4a3a';g.beginPath();g.arc(140,384,36,Math.PI,0);g.fill();eye(152,392,6);g.fillStyle='#7a1a1a';g.beginPath();g.ellipse(156,412,7,tk?3+Math.abs(Math.sin(gt*14))*6:2,0,0,7);g.fill();g.fillStyle='#8fa8ff22';g.beginPath();g.arc(330,350,210,0,7);g.fill();g.save();g.translate(330,400);g.rotate(-.3);g.fillStyle='#222';g.fillRect(-70,-92,140,92);g.fillStyle='#10213f';g.fillRect(-64,-86,128,80);g.fillStyle='#8fa8ff';g.font='46px Georgia';g.textAlign='center';g.fillText('✦',0,-36);g.fillStyle='#1affb2';g.font='11px monospace';g.fillText('gemini.generate()',0,-14+Math.sin(gt*5)*3);g.restore();g.fillStyle='#f0c8a0';g.beginPath();g.arc(280+Math.sin(gt*9)*6,380,10,0,7);g.arc(350+Math.cos(gt*9)*6,382,10,0,7);g.fill();label(300,520,'Tóth')}
+function phone(x,y){g.save();g.translate(x,y);g.rotate(.15);g.fillStyle='#111';g.fillRect(-22,-40,44,80);g.fillStyle='hsl('+(gt*120%360)+',80%,55%)';g.fillRect(-18,-34,36,68);g.textAlign='center';g.font='18px serif';g.fillText('💃',0,Math.sin(gt*6)*8);g.font='26px serif';g.fillText('❤️',14,-52-((gt*50)%50));g.restore()}
+let lastSt=null,lastG=0,pos={};const fcam={x:640,y:340,z:1.05};
+function drawFilm(st,t){
+ const cam=fcam;const dt=Math.min(.1,gt-lastG);lastG=gt;
+ const sc=st.sc,loc=LOC[S.indexOf(sc)],wk=loc==='hall'||loc==='street',n=sc.ch.length;
+ if(lastSt!==st){lastSt=st;sc.ch.forEach((c,i)=>{const sit=(sc.sit||[]).includes(c),m=(sc.mk&&sc.mk[c])||W*(i+1)/(n+1);if(st.k==='t')pos[c]={x:wk||sit||sc.bed?m:(sc.fr==='L'||!(i%2)?-160:W+160),tx:m};else if(pos[c])pos[c].tx=sit||sc.bed?m:c===st.who?m+((S.si+i)%2?-60:60):m})}
+ for(const c of sc.ch){const p=pos[c];if(!p)continue;const d=p.tx-p.x;p.x+=Math.sign(d)*Math.min(Math.abs(d),270*dt);p.mv=Math.abs(d)>4||wk}
+ const sp=pos[st.who],mvr=sc.ch.map(c=>pos[c]).find(p=>p&&!wk&&Math.abs(p.tx-p.x)>60),pat=loc==='class'?[3,1,5,0,2]:[1,0,2],k=mvr?4:st.k==='t'?0:pat[S.si%pat.length];
+ const tz=k===0?1.05+Math.min(t,4)*.01:k===1?1.5:k===3?1.3:k===4?1.25:k===5?1.1:2.1,tx=k===4?mvr.x:k===5?W/2:k===3?800+Math.sin(t*.6)*180:k&&sp?sp.x:W/2,ty=k===2?270:k===3?250:340;
+ const q=1-Math.exp(-dt*2.2);cam.z+=(tz-cam.z)*q;cam.x+=(tx-cam.x)*q;cam.y+=(ty-cam.y)*q;
+ const hw=W/2/cam.z,hh=H/2/cam.z,cx=Math.min(W-hw,Math.max(hw,cam.x)),cy=Math.min(H-hh,Math.max(hh,cam.y));
+ g.save();g.translate(W/2,H/2);g.scale(cam.z,cam.z);g.translate(-cx,-cy);
+ if(k===5&&loc==='class')front(sc,st);else{bg(loc,wk?gt*150:0);if(loc==='class'&&sc.pj)pj(sc.pj)}
+ sc.ch.forEach(c=>{const p=pos[c];if(!p||k===5&&loc==='class')return;const talk=st.k==='l'&&st.who===c&&(st.speaking||t<st.d);
+  const f=wk?1:(p.mv&&Math.abs(p.tx-p.x)>4?Math.sign(p.tx-p.x):(sp&&c!==st.who?(sp.x>p.x?1:-1):(p.x<W/2?1:-1)));
+  if(sc.bed&&c==='Tóth'){bedProp(talk);return}const sit=(sc.sit||[]).includes(c);person(p.x,560,c,talk,f,p.mv&&!sit,sit);if(sit&&loc==='class'){g.fillStyle='#7a5530';g.fillRect(p.x+f*60-80,482,160,14);g.fillRect(p.x+f*60-70,496,8,64);g.fillRect(p.x+f*60+62,496,8,64)}if(sc.wed&&(c==='Tóth'||AIS[c])){g.font='56px serif';g.textAlign='center';g.fillText(c==='Tóth'?'🤵':'👰',p.x,185)}if(sc.tt&&c==='Tóth')phone(p.x+f*58,sit?400:360)});if(loc==='office'){g.fillStyle='#5a3a1a';g.fillRect(320,490,680,70);g.fillStyle='#3d2610';g.fillRect(320,490,680,10);g.font='34px serif';g.textAlign='center';g.fillText('🖋️',500,486)}
+ g.restore();
+ if(sc.fx)fx(sc.fx);
+ if(k===3&&loc==='class'){g.fillStyle='#0b0d12';for(let i=0;i<5;i++){const x=110+i*265,yy=H+Math.sin(gt+i)*4;g.beginPath();g.arc(x,yy-70,88,0,7);g.fill();g.beginPath();g.ellipse(x,yy+50,160,100,0,0,7);g.fill()}}
+ if(st.ins==='crash'){g.textAlign='center';g.font='34px serif';for(let i=0;i<10;i++)g.fillText(i%3?'📄':'☕',W/2-180+i*40+Math.sin(t*3+i)*18,Math.min(540,230+t*200+(i%4)*14))}
+ if(st.ins==='tiktok'){g.fillStyle='rgba(0,0,0,.84)';g.fillRect(0,0,W,H);g.save();g.translate(W/2,H/2);g.fillStyle='#000';g.fillRect(-170,-330,340,660);g.fillStyle='hsl('+(gt*90%360)+',70%,45%)';g.fillRect(-160,-320,320,640);g.textAlign='center';g.font='120px serif';g.fillText(['💃','🕺','🐱','🍕'][Math.floor(gt*1.5)%4],0,20+Math.sin(gt*8)*20);g.fillStyle='#fff';g.font='bold 22px Georgia';g.fillText('@szucs_tanar_official',0,250);g.fillText('❤️ '+Math.floor(gt*913)%99999+'   💬 '+Math.floor(gt*77)%9999,0,285);g.font='30px serif';g.fillText('⬆',0,-285+Math.sin(gt*6)*6);g.restore()}
+ g.fillStyle='rgba(255,240,200,'+Math.random()*.05+')';g.fillRect(0,0,W,H);
+ if(Math.random()<.04){g.fillStyle='#fff6';g.fillRect(Math.random()*W,0,2,H)}
+ if(st.k==='t'){const a=t<.5?t/.5:t>1.5?Math.max(0,(2.2-t)/.7):1;g.fillStyle='rgba(0,0,0,'+.55*a+')';g.fillRect(0,0,W,H);g.globalAlpha=a;g.textAlign='center';g.fillStyle='#f2c14e';g.shadowColor='#000';g.shadowBlur=20;g.font='bold 52px Georgia';g.fillText(sc.t,W/2,H/2);g.font='28px Georgia';g.fillStyle='#fff';g.fillText('📍 '+LN[loc],W/2,H/2+60);g.globalAlpha=1;g.shadowBlur=0;const fi=Math.max(0,1-t/.8);if(fi>0){g.fillStyle='rgba(0,0,0,'+fi+')';g.fillRect(0,0,W,H)}}
+}
+/* ---------- 3D ---------- */
+const gl=document.getElementById('gl');
+const R=new THREE.WebGLRenderer({canvas:gl,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const sc3=new THREE.Scene();sc3.background=new THREE.Color(0x030206);sc3.fog=new THREE.FogExp2(0x030206,.028);
+const cam=new THREE.PerspectiveCamera(50,1,.1,120);
+function size(){R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+addEventListener('resize',size);size();
+const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.9},o||{}));
+const box=(w,h,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);sc3.add(o);return o};
+sc3.add(new THREE.AmbientLight(0x6a5a80,.45));
+const sl=new THREE.PointLight(0x8899ff,1.6,40);sl.position.set(0,5,-5);sc3.add(sl);
+[-8,8].forEach(x=>{const s=new THREE.SpotLight(0xffd9a0,.9,50,.5,.6);s.position.set(x,12,6);s.target.position.set(0,2,4);sc3.add(s,s.target)});
+box(46,.2,70,M(0x3a0d14),0,0,-6+30);
+box(46,.3,60,M(0x0c0910),0,14,24);
+box(.4,14,60,M(0x12101a),-23,7,24);box(.4,14,60,M(0x12101a),23,7,24);
+box(46,14,.4,M(0x0c0a12),0,7,-9);
+box(17.2,10.2,.4,M(0x000000),0,5.2,-8.2);
+const tex=new THREE.CanvasTexture(cv);tex.minFilter=THREE.LinearFilter;
+const scr=new THREE.Mesh(new THREE.PlaneGeometry(16,9),new THREE.MeshBasicMaterial({map:tex}));scr.position.set(0,5.2,-7.95);sc3.add(scr);
+const curM=M(0x8a0f22,{roughness:.6,emissive:0x2a0008});
+const cL=box(9,12,.4,curM,-4.5,5.6,-7.5),cR=box(9,12,.4,curM,4.5,5.6,-7.5);
+for(let i=0;i<7;i++){[cL,cR].forEach(c=>{const p=new THREE.Mesh(new THREE.BoxGeometry(.3,12,.5),curM);p.position.set(-4+i*1.33,0,.2);c.add(p)})}
+[-1,1].forEach(s=>{for(let i=0;i<8;i++)box(.5,.5,.3,new THREE.MeshBasicMaterial({color:0xffcf70}),s*22.7,3+Math.floor(i/2)*0+i*1.2,14-i*5)});
+const ROWS=9,COLS=[];for(let x=-9;x<=9;x+=1.2)if(Math.abs(x)>.8)COLS.push(x);
+const seatM=M(0xa01228,{roughness:.7}),N=ROWS*COLS.length;
+const sA=new THREE.InstancedMesh(new THREE.BoxGeometry(.95,.5,.9),seatM,N),sB=new THREE.InstancedMesh(new THREE.BoxGeometry(.95,1,.2),seatM,N);
+const hd=new THREE.InstancedMesh(new THREE.SphereGeometry(.24,10,8),M(0x0a0810),N);let hi=0,k=0;const D=new THREE.Object3D();
+for(let r=0;r<ROWS;r++){const z=3+r*1.6,y=r*.18;box(46,.18,1.6,M(0x1a0a10),0,y-.05,z);
+ for(const x of COLS){D.position.set(x,y+.55,z);D.updateMatrix();sA.setMatrixAt(k,D.matrix);D.position.set(x,y+1.05,z+.45);D.updateMatrix();sB.setMatrixAt(k,D.matrix);k++;
+ if(Math.random()<.35){D.position.set(x,y+1.25,z+.15);D.updateMatrix();hd.setMatrixAt(hi++,D.matrix)}}}
+hd.count=hi;sc3.add(sA,sB,hd);
+const dn=500,dp=new Float32Array(dn*3);for(let i=0;i<dn;i++){dp[i*3]=(Math.random()-.5)*30;dp[i*3+1]=Math.random()*12;dp[i*3+2]=Math.random()*30-8}
+const dg=new THREE.BufferGeometry();dg.setAttribute('position',new THREE.BufferAttribute(dp,3));
+sc3.add(new THREE.Points(dg,new THREE.PointsMaterial({color:0xfff2d0,size:.06,transparent:true,opacity:.5})));
+const cn=300,cp=new Float32Array(cn*3),cc=new Float32Array(cn*3),pal=[0xff4d6d,0xffd166,0x06d6a0,0x4cc9f0,0xc77dff].map(c=>new THREE.Color(c));
+for(let i=0;i<cn;i++){cp[i*3]=(Math.random()-.5)*20;cp[i*3+1]=Math.random()*12;cp[i*3+2]=Math.random()*14-4;const c=pal[i%5];cc.set([c.r,c.g,c.b],i*3)}
+const cg=new THREE.BufferGeometry();cg.setAttribute('position',new THREE.BufferAttribute(cp,3));cg.setAttribute('color',new THREE.BufferAttribute(cc,3));
+const conf=new THREE.Points(cg,new THREE.PointsMaterial({size:.16,vertexColors:true}));conf.visible=false;sc3.add(conf);
+
+/* ---------- audio ---------- */
+let ac=null;
+function tone(f,t0,d,type,v){if(!ac)return;const o=ac.createOscillator(),a=ac.createGain();o.type=type||'triangle';o.frequency.value=f;a.gain.setValueAtTime(0,ac.currentTime+t0);a.gain.linearRampToValueAtTime(v||.1,ac.currentTime+t0+.05);a.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t0+d);o.connect(a);a.connect(ac.destination);o.start(ac.currentTime+t0);o.stop(ac.currentTime+t0+d+.05)}
+function fanfare(){[[262,0],[330,.4],[392,.8],[523,1.3]].forEach(n=>{tone(n[0],n[1],2,'sawtooth',.06);tone(n[0]/2,n[1],2,'triangle',.1)});[523,659,784].forEach(f=>tone(f,2.2,2.2,'sawtooth',.05))}
+function march(){let t=0;[[392,.6],[523,1.2],[523,.6],[523,1.2],[494,.6],[523,.6],[587,.6],[659,1.8],[587,.6],[523,.6],[494,.6],[440,.6],[392,1.8]].forEach(n=>{tone(n[0],t,n[1]+.3,'triangle',.05);tone(n[0]/2,t,n[1]+.3,'sine',.04);t+=n[1]})}
+function drone(){tone(55,0,40,'sine',.05);tone(82,0,40,'sine',.03)}
+const MOOD=[[131,165,196,247],[147,185,220,277],[175,220,262,330],[147,175,220,262],[131,165,196],[110,131,165],[123,156,185],[147,185,220],[98,117,147,175],[131,165,196,262],[196,247,294,392],[110,138,165,220]];
+function pad(c){c.forEach(f=>{tone(f,0,18,'sine',.02);tone(f*2,0,18,'triangle',.008)})}
+function noise(d,v,f){if(!ac)return;const b=ac.createBuffer(1,ac.sampleRate*d,ac.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;const s=ac.createBufferSource(),fl=ac.createBiquadFilter(),gn=ac.createGain();s.buffer=b;fl.type='bandpass';fl.frequency.value=f;gn.gain.setValueAtTime(0,ac.currentTime);gn.gain.linearRampToValueAtTime(v,ac.currentTime+d*.3);gn.gain.linearRampToValueAtTime(0,ac.currentTime+d);s.connect(fl);fl.connect(gn);gn.connect(ac.destination);s.start()}
+
+/* ---------- voices ---------- */
+const VOICE={'Narrátor':[.62,.88,0],'Tóth':[.95,1,0],Lillien:[1.45,1,1],'Pista barátnője':[1.7,1.1,1],'Zsolti Bá':[.55,.85,0],'Tóth':[.78,.97,0],'Kele':[.85,1.05,0],Peti:[1.5,1.15,0],Maja:[1.55,1.1,1],Bence:[1.3,1.12,0],ChatGPT:[1.25,1.18,1],Claude:[.9,.92,0],Gemini:[1.9,1.3,1]};
+let voices=[],muted=false;const SS=window.speechSynthesis;
+function loadV(){if(!SS)return;voices=SS.getVoices().filter(v=>/^hu/i.test(v.lang))}
+if(SS){loadV();SS.onvoiceschanged=loadV}
+function pickVoice(f){if(!voices.length)return null;const a=voices.filter(v=>/noémi|noemi|female|eszter|zsuzsa/i.test(v.name)),b=voices.filter(v=>/szabolcs|male|gábor|attila/i.test(v.name));return (f?a[0]:b[0])||voices[0]}
+function speak(st){st.speaking=false;if(!SS||muted)return;try{SS.cancel();const u=new SpeechSynthesisUtterance(st.txt.replace(/[„”]/g,'').replace(/—/g,'.'));const v=VOICE[st.who]||VOICE['Narrátor'];u.lang='hu-HU';const vo=pickVoice(v[2]);if(vo)u.voice=vo;u.pitch=v[0];u.rate=v[1];st.speaking=true;u.onend=u.onerror=()=>{st.speaking=false;st.endT=S.sT};SS.speak(u)}catch(x){st.speaking=false}}
+/* ---------- state & loop ---------- */
+S.T=0;S.started=false;S.si=0;S.sT=0;S.credits=false;S.cT=0;S.paused=false;
+const sub=document.getElementById('sub'),ease=u=>u<0?0:u>1?1:u*u*(3-2*u);
+const clock=new THREE.Clock(),look=new THREE.Vector3(0,5,-8),dpos=new THREE.Vector3(),tmpC=new THREE.Color();
+let lastKey='',lastSi=-1,fanDone=false;
+function frame(){
+ requestAnimationFrame(frame);
+ const dt=Math.min(clock.getDelta(),.05);gt+=dt;
+ if(S.started&&!S.paused){S.T+=dt;
+  if(S.T>=6&&!fanDone){fanDone=true;fanfare()}
+  if(S.T>=15){if(!S.credits){S.sT+=dt;const cs=STEPS[S.si];if(S.sT>cs.d&&(!cs.speaking||S.sT>cs.d+cs.txt.length*.1+3)&&S.sT>(cs.endT||0)+.45){if(S.si>=STEPS.length-1){S.credits=true;S.cT=0;document.getElementById('again').style.display='block'}else{S.si++;S.sT=0}}}else S.cT+=dt}}
+ const T=S.T;
+ if(S.started&&T>=15&&!S.credits&&S.si!==lastSi){lastSi=S.si;const cs0=STEPS[S.si],s=cs0.sc;if(cs0.k==='t'){tone(660,0,1.8,'sine',.06);pad(MOOD[S.indexOf(s)]||MOOD[0]);if(s.fx==='rain')noise(14,.05,3000)}if(s.mus&&!s.played){s.played=1;march()}if(cs0.k==='l'&&cs0.who==='Narrátor'&&s.mus)noise(5,.1,1800);speak(cs0)}
+ const A=new THREE.Vector3(Math.sin(gt*.12)*3,7.5,24),B=new THREE.Vector3(0,4.4,13),C=new THREE.Vector3(0,5.2,3.6);
+ if(!S.started)cam.position.copy(A);
+ else if(T<15){cam.position.copy(A).lerp(B,ease(T/6));if(T>10.5)cam.position.copy(B).lerp(C,ease((T-10.5)/4.5))}
+ else{const s=STEPS[S.si].sc;dpos.set(Math.sin(gt*.2)*3.5,5.2+Math.sin(gt*.5)*.2,3.6+(S.credits?7:(s.cz||0)*.5));cam.position.lerp(dpos,1-Math.exp(-dt*1.4))}
+ cam.lookAt(look.set(0,5+(T<6?-.5:0),-8));
+ const e=ease((T-2.5)/3.5);cL.position.x=-4.5-e*10;cR.position.x=4.5+e*10;
+ if(S.started&&T>=15&&!S.credits){tmpC.set(STEPS[S.si].sc.bg[0]);sl.color.lerp(tmpC,.05);sl.intensity=1.6+Math.sin(gt*8)*.15}else sl.intensity=T>6?1.6:.2;
+ const wed=S.started&&T>=15&&!S.credits&&STEPS[S.si].sc.wed;conf.visible=!!wed;
+ if(wed){const p=cg.attributes.position;for(let i=0;i<cn;i++){let y=p.getY(i)-dt*(1.5+(i%4)*.4);if(y<0)y=12;p.setY(i,y);p.setX(i,p.getX(i)+Math.sin(gt+i)*.01)}p.needsUpdate=true}
+ drawScreen();tex.needsUpdate=true;R.render(sc3,cam);
+ let key='';
+ if(S.started&&T>=15&&!S.credits){const st=STEPS[S.si];if(st.k==='l'){const n=Math.min(st.txt.length,Math.floor(S.sT*24));key=S.si+':'+n;if(key!==lastKey){lastKey=key;sub.innerHTML='<b style="color:'+(COL[st.who]||'#fff')+'">'+st.who+'</b>'+st.txt.slice(0,n)}}else if(lastKey!=='t'+S.si){lastKey='t'+S.si;sub.innerHTML=''}}
+ else if(lastKey!==''){lastKey='';sub.innerHTML=''}
+}
+function begin(){
+ try{ac=new (window.AudioContext||window.webkitAudioContext)();drone()}catch(x){}
+ S.started=true;const s=document.getElementById('start');s.style.opacity=0;setTimeout(()=>s.style.display='none',1700);document.getElementById('ctl').style.display='flex'}
+document.getElementById('go').onclick=begin;
+const pz=document.getElementById('pz');
+function pause(){S.paused=!S.paused;pz.textContent=S.paused?'▶':'⏸';if(ac&&!muted){S.paused?ac.suspend():ac.resume()}if(SS){S.paused?SS.pause():SS.resume()}}
+function skip(){if(S.T<15)S.T=Math.max(S.T,S.T<6?6:S.T<10.5?10.5:15);else if(!S.credits){if(SS)SS.cancel();STEPS[S.si].speaking=false;S.sT=STEPS[S.si].d+.5}}
+pz.onclick=pause;document.getElementById('sk').onclick=skip;const mu=document.getElementById('mu');mu.onclick=()=>{muted=!muted;mu.textContent=muted?'🔇':'🔊';if(muted){if(SS)SS.cancel();if(ac)ac.suspend()}else if(ac&&!S.paused)ac.resume()};
+document.getElementById('again').onclick=()=>location.reload();
+addEventListener('keydown',e=>{if(!S.started)return;if(e.code==='Space'){e.preventDefault();pause()}if(e.code==='ArrowRight')skip()});
+frame();
+})();
+</script></body></html>
